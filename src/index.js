@@ -15,6 +15,9 @@ const onRecodingStopClick = function (e) {
   RecodingButton.removeEventListener("click", onRecodingStopClick);
   RecodingButton.addEventListener("click", onRecodingClick);
 
+  // mediaRecorder 이벤트 재 실행을 막습니다
+  mediaRecorder.removeEventListener("dataavailable", saveBlobData);
+
   // 텍스트 변화
   RecodingButton.innerHTML = "Start Recoding";
   recodingTime.innerHTML = "";
@@ -26,12 +29,21 @@ const onRecodingStopClick = function (e) {
     mimeType: "audio/webm;codecs=opus",
   });
 
+  audioData = [];
+
   // // 다운로드
-  // const audioDownloadLink = document.createElement("a");
-  // audioDownloadLink.href = URL.createObjectURL(fullBlob);
-  // audioDownloadLink.download = "Audio.webm";
-  // document.body.appendChild(audioDownloadLink);
-  // audioDownloadLink.click();
+  const audioDownloadLink = document.createElement("a");
+  audioDownloadLink.href = URL.createObjectURL(fullBlob);
+  audioDownloadLink.download = "Audio.webm";
+  document.body.appendChild(audioDownloadLink);
+  audioDownloadLink.click();
+};
+
+const saveBlobData = (e) => {
+  time++;
+  recodingTime.innerHTML = `Recoding for ${time}`;
+  console.log(e.data);
+  audioData.push(e.data);
 };
 
 const onRecodingClick = function (e) {
@@ -55,13 +67,7 @@ const onRecodingClick = function (e) {
       mediaRecorder.start(1000);
 
       // start에 설정한 timeslice에 따라 1초 마다 dataavailable한 blob 추출됨
-
-      mediaRecorder.addEventListener("dataavailable", (e) => {
-        time++;
-        recodingTime.innerHTML = `Recoding for ${time}`;
-        console.log(e.data);
-        audioData.push(e.data);
-      });
+      mediaRecorder.addEventListener("dataavailable", saveBlobData);
     })
     .catch((err) => {
       RecodingButton.innerHTML = "Error!";
