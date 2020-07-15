@@ -5,6 +5,7 @@ const RecodingButton = document.querySelector("button");
 const recodingTime = document.querySelector(".recodingTime");
 
 let time = 0;
+let audioData = [];
 let fullBlob = new Blob([], { mimeType: "audio/webm;codecs=opus" });
 
 function onRecodingClick(e) {
@@ -17,6 +18,39 @@ function onRecodingClick(e) {
         mimeType: "audio/webm;codecs=opus",
       });
 
+      // 녹화가 시작되었으므로 버튼에서 녹화 이벤트를 제거하고 녹화 중지 이벤트를 달아줍니다.
+      RecodingButton.removeEventListener("click", onRecodingClick);
+      RecodingButton.addEventListener("click", onRecodingStopClick);
+
+      function onRecodingStopClick(e) {
+        // 우선 녹화를 멈춥니다.
+        mediaRecorder.stop();
+        // 정지 이벤트를 지우고 재녹화 이벤트를 달아줍니다.
+        RecodingButton.removeEventListener("click", onRecodingStopClick);
+        // RecodingButton.addEventListener("click", onRecodingClick);
+
+        // 텍스트 변화
+        RecodingButton.innerHTML = "Start Recoding";
+        recodingTime.innerHTML = "";
+        time = 0;
+        console.log(audioData);
+
+        // // 받은 audioData를 전부 합쳐서 하나의 Blob으로 만듦
+        // let fullBlob = new Blob(audioData, {
+        //   mimeType: "audio/webm;codecs=opus",
+        // });
+
+        // // 다운로드
+        // const audioDownloadLink = document.createElement("a");
+        // audioDownloadLink.href = URL.createObjectURL(fullBlob);
+        // audioDownloadLink.download = "Audio.webm";
+        // document.body.appendChild(audioDownloadLink);
+        // audioDownloadLink.click();
+      }
+
+      // 버튼의 글을 바꿉니다.
+      RecodingButton.innerHTML = "Stop Recoding";
+
       // 녹화 시작. 1초마다 chunk를 생성
       mediaRecorder.start(1000);
 
@@ -25,12 +59,13 @@ function onRecodingClick(e) {
         time++;
         recodingTime.innerHTML = `Recoding for ${time}`;
         console.log(e.data);
+        audioData.push(e.data);
       });
-
-      // 버튼의 글을 바꿉니다.
-      RecodingButton.innerHTML = "Stop Recoding";
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      RecodingButton.innerHTML = "Error!";
+      RecodingButton.removeEventListener("click", onRecodingClick);
+    });
 }
 
 RecodingButton.addEventListener("click", onRecodingClick);
